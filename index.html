@@ -146,26 +146,26 @@
     </div>
     <script>
         const correctAnswers = {
-            'person1': '경문',
-            'person2': '서윤',
-            'person3': '슬기',
-            'person4': '어진',
-            'person5': '신영',
-            'person6': '민철',
-            'person7': '지영',
-            'person8': '민경',
-            'person9': '예람',
-            'person10': '주희',
-            'person11': '남혁',
-            'person12': '주원',
-            'person13': '인호',
-            'person14': '재성',
-            'person15': '연진',
-            'person16': '건희',
-            'person17': '아름',
-            'person18': '은진',
-            'person19': '성연',
-            'person20': '다온'
+            'Person1': '경문',
+            'Person2': '서윤',
+            'Person3': '슬기',
+            'Person4': '어진',
+            'Person5': '신영',
+            'Person6': '민철',
+            'Person7': '지영',
+            'Person8': '민경',
+            'Person9': '예람',
+            'Person10': '주희',
+            'Person11': '남혁',
+            'Person12': '주원',
+            'Person13': '인호',
+            'Person14': '재성',
+            'Person15': '연진',
+            'Person16': '건희',
+            'Person17': '아름',
+            'Person18': '은진',
+            'Person19': '성연',
+            'Person20': '다온'
         };
 
         let score = 0;
@@ -234,14 +234,14 @@
             clearInterval(timerInterval);
         }
 
-        function createPhotoContainer(personId) {
+        function createPhotoContainer(PersonId) {
             const container = document.createElement('div');
             container.className = 'photo-container';
             container.innerHTML = `
                 <p>정답은 이름 두글자만 입력하면 됩니다. ex)민철</p>
-                <img src="${personId}.png" alt="${personId}">
-                <input type="text" id="input-${personId}" placeholder="Enter name" onkeydown="if(event.key === 'Enter') document.getElementById('submit-${personId}').click()">
-                <button id="submit-${personId}" onclick="guess('${personId}')">Submit</button>
+                <img src="${PersonId}.png" alt="${PersonId}">
+                <input type="text" id="input-${PersonId}" placeholder="Enter name" onkeydown="if(event.key === 'Enter') document.getElementById('submit-${PersonId}').click()">
+                <button id="submit-${PersonId}" onclick="guess('${PersonId}')">Submit</button>
             `;
             return container;
         }
@@ -250,27 +250,27 @@
             const photosDiv = document.getElementById('photos');
             photosDiv.innerHTML = '';
             if (correctGuesses < 20) {
-                const personId = `person${correctGuesses + 1}`;
-                photosDiv.appendChild(createPhotoContainer(personId));
+                const PersonId = `Person${correctGuesses + 1}`;
+                photosDiv.appendChild(createPhotoContainer(PersonId));
                 setTimeout(() => {
-                    document.getElementById(`input-${personId}`).focus();
+                    document.getElementById(`input-${PersonId}`).focus();
                 }, 100);
             }
         }
 
-        function guess(personId) {
-            const input = document.getElementById(`input-${personId}`);
+        function guess(PersonId) {
+            const input = document.getElementById(`input-${PersonId}`);
             const resultDiv = document.getElementById('result');
-            if (input.value === correctAnswers[personId]) {
-                resultDiv.textContent = `Correct! You guessed right for ${personId}.`;
+            if (input.value === correctAnswers[PersonId]) {
+                resultDiv.textContent = `Correct! You guessed right for ${PersonId}.`;
                 resultDiv.style.color = 'green';
                 score += 3;
                 correctGuesses++;
-                guesses.push({ personId, correct: true, time: new Date() - startTime });
+                guesses.push({ PersonId, correct: true, time: new Date() - startTime });
             } else {
-                resultDiv.textContent = `Wrong! Try again for ${personId}.`;
+                resultDiv.textContent = `Wrong! Try again for ${PersonId}.`;
                 resultDiv.style.color = 'red';
-                guesses.push({ personId, correct: false, time: new Date() - startTime });
+                guesses.push({ PersonId, correct: false, time: new Date() - startTime });
                 return;
             }
 

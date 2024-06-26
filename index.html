@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess Who Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100%;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #start, #game, #leaderboard, #question, #countdown {
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        #photos img {
+            width: 400px; /* 이미지 크기 4배로 조정 */
+            margin: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        #photos img:hover {
+            transform: scale(1.1);
+        }
+
+        .photo-container {
+            margin-bottom: 20px;
+            flex-basis: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #result, #score, #nickname-input, #timer, #question-input, #countdown-timer {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        #question-result {
+            font-size: 36px; /* 틀렸을 때 나오는 문구 크기 증가 */
+            margin-top: 20px;
+        }
+
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+            width: 80%;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #leaderboard table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #leaderboard th, #leaderboard td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #leaderboard th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        #countdown-message {
+            font-size: 48px; /* 3, 2, 1, GO 문구 크기 */
+        }
+    </style>
+</head>
+<body>
+    <div id="start">
+        <h1>Guess Who Game</h1>
+        <div id="nickname-input">
+            <p>닉네임을 입력하세요. 순위에 반영됩니다</p>
+            <input type="text" id="nickname" placeholder="Enter your nickname" onkeydown="if(event.key === 'Enter') showQuestion()">
+            <button onclick="showQuestion()">Next</button>
+        </div>
+    </div>
+    <div id="question" style="display:none;">
+        <h2>(진지)띵플의 24년 마케팅 공헌이익 목표액은?</h2>
+        <input type="text" id="question-answer" placeholder="Enter the answer" onkeydown="if(event.key === 'Enter') checkAnswer()">
+        <button onclick="checkAnswer()">Submit</button>
+        <div>힌트: <a href="https://www.notion.so/thingsflow/KR1-89-174-23-6-7d640829f6a74248aebf3ac602cbdb38?pvs=4" target="_blank">여기</a></div>
+        <div id="question-result"></div>
+        <div id="countdown-timer"></div>
+    </div>
+    <div id="countdown" style="display:none;">
+        <div id="countdown-message"></div>
+    </div>
+    <div id="game" style="display:none;">
+        <h1>Guess Who</h1>
+        <div id="timer">Time: 0.0000 seconds</div>
+        <div id="photos">
+            <!-- Photo containers will be inserted here by JavaScript -->
+        </div>
+        <div id="result"></div>
+        <div id="score"></div>
+    </div>
+    <div id="leaderboard" style="display:none;">
+        <h1>Leaderboard</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Nickname</th>
+                    <th>Score</th>
+                    <th>Time (s)</th>
+                    <th>Total Score</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+                <!-- Leaderboard entries will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+        <button onclick="restartGame()">Play Again</button>
+    </div>
+    <script>
+        const correctAnswers = {
+            'person1': '경문',
+            'person2': '서윤',
+            'person3': '슬기',
+            'person4': '어진',
+            'person5': '신영',
+            'person6': '민철',
+            'person7': '지영',
+            'person8': '민경',
+            'person9': '예람',
+            'person10': '주희',
+            'person11': '남혁',
+            'person12': '주원',
+            'person13': '인호',
+            'person14': '재성',
+            'person15': '연진',
+            'person16': '건희',
+            'person17': '아름',
+            'person18': '은진',
+            'person19': '성연',
+            'person20': '다온'
+        };
+
+        let score = 0;
+        let correctGuesses = 0;
+        let startTime, timerInterval;
+        let nickname = "";
+        const leaderboard = [];
+        const guesses = [];
+        const correctQuestionAnswer = "89억"; // 정답
+
+        function showQuestion() {
+            nickname = document.getElementById('nickname').value;
+            if (nickname.trim() === "") {
+                alert("Please enter a nickname");
+                return;
+            }
+            document.getElementById('start').style.display = 'none';
+            document.getElementById('question').style.display = 'block';
+        }
+
+        function checkAnswer() {
+            const answer = document.getElementById('question-answer').value;
+            const questionResultDiv = document.getElementById('question-result');
+            const countdownTimerDiv = document.getElementById('countdown-timer');
+            if (answer === correctQuestionAnswer) {
+                document.getElementById('question').style.display = 'none';
+                document.getElementById('countdown').style.display = 'block';
+                let countdown = 3;
+                countdownTimerDiv.textContent = '';
+                const countdownInterval = setInterval(() => {
+                    if (countdown > 0) {
+                        document.getElementById('countdown-message').textContent = countdown;
+                        countdown--;
+                    } else {
+                        document.getElementById('countdown-message').textContent = 'GO';
+                        clearInterval(countdownInterval);
+                        setTimeout(startGame, 1000);
+                    }
+                }, 1000);
+            } else {
+                questionResultDiv.textContent = "당신은 띵플러가 아니군요!";
+                countdownTimerDiv.textContent = "10초 뒤 다시 시도하세요";
+                let countdown = 10;
+                const countdownInterval = setInterval(() => {
+                    countdownTimerDiv.textContent = `10초 뒤 다시 시도하세요 (${countdown})`;
+                    countdown--;
+                    if (countdown < 0) {
+                        clearInterval(countdownInterval);
+                        countdownTimerDiv.textContent = "";
+                        questionResultDiv.textContent = "";
+                    }
+                }, 1000);
+            }
+        }
+
+        function startTimer() {
+            const timerDiv = document.getElementById('timer');
+            timerInterval = setInterval(() => {
+                const currentTime = new Date();
+                const elapsedTime = (currentTime - startTime) / 1000;
+                timerDiv.textContent = `Time: ${elapsedTime.toFixed(4)} seconds`;
+            }, 10); // 0.0000초까지 표시
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function createPhotoContainer(personId) {
+            const container = document.createElement('div');
+            container.className = 'photo-container';
+            container.innerHTML = `
+                <p>정답은 이름 두글자만 입력하면 됩니다. ex)민철</p>
+                <img src="${personId}.png" alt="${personId}">
+                <input type="text" id="input-${personId}" placeholder="Enter name" onkeydown="if(event.key === 'Enter') document.getElementById('submit-${personId}').click()">
+                <button id="submit-${personId}" onclick="guess('${personId}')">Submit</button>
+            `;
+            return container;
+        }
+
+        function showNextPerson() {
+            const photosDiv = document.getElementById('photos');
+            photosDiv.innerHTML = '';
+            if (correctGuesses < 20) {
+                const personId = `person${correctGuesses + 1}`;
+                photosDiv.appendChild(createPhotoContainer(personId));
+                setTimeout(() => {
+                    document.getElementById(`input-${personId}`).focus();
+                }, 100);
+            }
+        }
+
+        function guess(personId) {
+            const input = document.getElementById(`input-${personId}`);
+            const resultDiv = document.getElementById('result');
+            if (input.value === correctAnswers[personId]) {
+                resultDiv.textContent = `Correct! You guessed right for ${personId}.`;
+                resultDiv.style.color = 'green';
+                score += 3;
+                correctGuesses++;
+                guesses.push({ personId, correct: true, time: new Date() - startTime });
+            } else {
+                resultDiv.textContent = `Wrong! Try again for ${personId}.`;
+                resultDiv.style.color = 'red';
+                guesses.push({ personId, correct: false, time: new Date() - startTime });
+                return;
+            }
+
+            input.disabled = true;
+            input.nextElementSibling.disabled = true;
+            updateScore();
+
+            if (correctGuesses === 20) {
+                stopTimer();
+                const endTime = new Date();
+                const totalTime = (endTime - startTime) / 1000;
+                const finalScore = calculateTotalScore(score, totalTime);
+                resultDiv.textContent = `Congratulations! You finished the game.`;
+                const scoreDiv = document.getElementById('score');
+                scoreDiv.textContent = `Your score: ${finalScore.toFixed(2)} points. Time taken: ${totalTime.toFixed(4)} seconds.`;
+                saveToLeaderboard(nickname, score, totalTime, finalScore);
+                showLeaderboard();
+            } else {
+                showNextPerson();
+            }
+        }
+
+        function updateScore() {
+            const scoreDiv = document.getElementById('score');
+            scoreDiv.textContent = `Score: ${score} points.`;
+        }
+
+        function calculateTotalScore(score, time) {
+            const timeBonus = Math.max(0, 40 - time);
+            return score + timeBonus;
+        }
+
+        function saveToLeaderboard(nickname, score, time, totalScore) {
+            leaderboard.push({ nickname, score, time, totalScore });
+            leaderboard.sort((a, b) => b.totalScore - a.totalScore || a.time - b.time);
+        }
+
+        function showLeaderboard() {
+            document.getElementById('game').style.display = 'none';
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            leaderboardBody.innerHTML = '';
+            leaderboard.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.nickname}</td>
+                    <td>${entry.score}</td>
+                    <td>${entry.time.toFixed(4)}</td>
+                    <td>${entry.totalScore.toFixed(2)}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+            document.getElementById('leaderboard').style.display = 'block';
+        }
+
+        function restartGame() {
+            score = 0;
+            correctGuesses = 0;
+            guesses.length = 0;
+            document.getElementById('leaderboard').style.display = 'none';
+            document.getElementById('start').style.display = 'block';
+        }
+
+        function startGame() {
+            document.getElementById('countdown').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            startTime = new Date();
+            startTimer();
+            showNextPerson();
+        }
+
+        window.onload = () => {
+            // 게임 시작 전에는 아무것도 하지 않음
+        };
+    </script>
+</body>
+</html>
